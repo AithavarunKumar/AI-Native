@@ -32,7 +32,7 @@ class TechnicianAvailabilityServiceTest {
 
     @Test
     void booksAJobForAnAvailableTechnician() {
-        LocalDateTime start = LocalDateTime.now().withHour(16).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime start = LocalDateTime.now().withHour(17).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime end = start.plusHours(1);
 
         Job job = service.bookJob(1L, "New Customer", start, end);
@@ -56,5 +56,31 @@ class TechnicianAvailabilityServiceTest {
         LocalDateTime end = start.plusHours(1);
 
         assertThrows(IllegalArgumentException.class, () -> service.bookJob(999L, "Nobody", start, end));
+    }
+
+    @Test
+    void rejectsAJobWithPartiallyOverlappingTimes() {
+        LocalDateTime start = LocalDateTime.now().withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(1);
+
+        assertThrows(IllegalStateException.class, () -> service.bookJob(1L, "Overlapping Customer", start, end));
+    }
+
+    @Test
+    void rejectsAJobWithinTheTravelBuffer() {
+        LocalDateTime start = LocalDateTime.now().withHour(11).withMinute(30).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(1);
+
+        assertThrows(IllegalStateException.class, () -> service.bookJob(1L, "Too Soon", start, end));
+    }
+
+    @Test
+    void acceptsAJobExactlyOneTravelBufferAfterExistingJob() {
+        LocalDateTime start = LocalDateTime.now().withHour(11).withMinute(45).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(1);
+
+        Job job = service.bookJob(1L, "Buffer Customer", start, end);
+
+        assertEquals("Buffer Customer", job.getCustomerName());
     }
 }

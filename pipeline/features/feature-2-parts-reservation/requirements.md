@@ -15,7 +15,7 @@ After Feature 1 confirms and creates a technician job for a valid, conflict-free
 
 Parts reservation does not replace or recreate technician scheduling. It operates on a job that already exists and was successfully created by Feature 1. The repository does not establish whether scheduling and reservation occur in one combined operation or as separate operations, or whether a stock failure changes the job or technician booking. These remain open business decisions.
 
-<!-- HUMAN REVIEW:
+<!-- Reviewed by me:
 Original BA output: "A parts-reservation failure may prevent final job confirmation, but it must not silently alter or cancel the Feature 1 technician booking."
 Correction: Replaced it with a neutral statement that the repository does not establish combined-operation or rollback behavior, and that these decisions remain open.
 Reason: The initial draft assumed that stock failure could prevent final confirmation and that preservation of a booked slot was the desired policy. The repository defines no such combined-transaction or rollback rule.
@@ -30,7 +30,7 @@ Reason: The initial draft assumed that stock failure could prevent final confirm
 - **US-5:** As a dispatcher, I want repeated reservation requests for the same job to be idempotent, so that retries do not double-reserve stock.
 - **US-6:** As a service manager, I want unavailable-stock responses to state only the known inventory shortage, with no implied backorder or purchase; backorder handling remains a separate business decision.
 
-<!-- HUMAN REVIEW:
+<!-- Reviewed by me:
 Original BA output: US-1 said the dispatcher schedules a job and checks parts atomically; US-6 said to distinguish unavailable stock from an "optional backorder".
 Correction: US-1 now reserves for an existing scheduled job, US-4 is explicitly conditioned on a supported cancellation lifecycle, and US-6 removes the optional-backorder implication.
 Reason: Feature 1 owns job scheduling, and the repository does not establish atomic scheduling-plus-reservation or backorder support. The user stories should not expand Feature 2 beyond repository-defined behavior.
@@ -54,7 +54,7 @@ Reason: Feature 1 owns job scheduling, and the repository does not establish ato
 - **AC-14 — Traceability:** Every reservation records the job ID and part ID/quantity, and reservation status is queryable by job ID.
 - **AC-15 — Concurrent reservation:** Two or more jobs attempting to reserve the same constrained stock are processed safely; one request is rejected if net available stock is insufficient, and aggregate reserved quantity never exceeds available physical stock.
 
-<!-- HUMAN REVIEW:
+<!-- Reviewed by me:
 Original BA output: AC-3 made all-or-nothing an assumed default policy; AC-12 allowed an unmet quantity to be identified as "backorder-eligible" without policy; AC-10 assumed a cancellation API; AC-15 was missing as an explicit acceptance criterion even though the edge-case section mentioned concurrency.
 Correction: Removed the invented all-or-nothing default, made partial-stock behavior an open business question, prohibited backorder status until policy exists, tied cancellation to a supported lifecycle, and added a concurrent-reservation acceptance criterion.
 Reason: The repository provides no partial-stock or backorder policy and Feature 1 has no cancellation endpoint. Concurrency needed to be elevated from an edge case to a testable requirement.
@@ -74,7 +74,7 @@ Reason: The repository provides no partial-stock or backorder policy and Feature
 - **Job completion and stock consumption:** Reserved stock consumption at job start or completion is outside scope unless a later approved lifecycle explicitly defines it.
 - **Invalid quantities or part lists:** Required quantities must be positive, and unknown parts are unavailable. Whether a job with no required parts is valid remains open if the repository later adds work types or part requirements.
 
-<!-- HUMAN REVIEW:
+<!-- Reviewed by me:
 Original BA output: The edge-case section assumed all-or-nothing partial stock, invented no-requirements validity behaviour, and described completion consumption as a vague open implementation choice.
 Correction: Added full-stock and jobs-without-a-slot explicitly, moved partial-stock policy into an open business question, corrected cancellation to a repository-supported gap, and kept stock consumption outside Feature 2 scope.
 Reason: These additions make the repository-backed scenarios and unsupported assumptions explicit; they remove guessed behavior that could become hidden implementation policy.
@@ -89,7 +89,7 @@ Reason: These additions make the repository-backed scenarios and unsupported ass
 - The repository does not define a combined `POST /api/jobs` plus parts-reservation transaction. A separate reservation request and combined-operation policy must be approved before implementation.
 - The repository does not define whether a stock shortage leaves the Feature 1 slot booked, rolls back a schedule, or changes job status. No rollback behavior is assumed in this requirements document.
 
-<!-- HUMAN REVIEW:
+<!-- Reviewed by me:
 Original BA output: The draft required HTTP `409`/`404` behavior for Feature 1 and assumed a stock failure would preserve the committed technician slot unless a separate rollback policy was approved.
 Correction: Retained the fact that Feature 1's missing-tech and overlap outcomes make a job ineligible; removed the preservation-or-rollback assumption and stated that combined scheduling/reservation behavior is unresolved.
 Reason: Feature 1 establishes booking conflicts and not-found behavior, but it does not establish transaction semantics with a later parts feature. Preservation or rollback must not be presented as a decision without repository evidence.
@@ -105,7 +105,7 @@ Reason: Feature 1 establishes booking conflicts and not-found behavior, but it d
 - 100% of shortage responses include the affected part ID and requested versus available quantity.
 - If and when cancellation is exposed, 100% of active reservations for a cancelled job are released exactly once.
 
-<!-- HUMAN REVIEW:
+<!-- Reviewed by me:
 Original BA output: The draft used a 100% metric for "failed all-or-nothing reservations" and assumed cancellation always existed.
 Correction: Changed the failure metric to depend on the approved failure policy and conditioned cancellation on a supported cancellation lifecycle.
 Reason: All-or-nothing and cancellation behavior are not established in the repository, so the metric would otherwise validate a hidden business assumption.
@@ -134,7 +134,7 @@ Reason: All-or-nothing and cancellation behavior are not established in the repo
 9. When, if ever, are reserved parts consumed: at job start, completion, or through a separate operation?
 10. What HTTP status and response shape represent partial or unavailable inventory outcomes?
 
-<!-- HUMAN REVIEW:
+<!-- Reviewed by me:
 Original BA output: The draft included assumptions that the partial-stock policy was all-or-nothing and that reservation could be tied to a cancellation lifecycle without repository evidence.
 Correction: Moved policy-sensitive statements out of the assumptions and retained them as open business questions.
 Reason: The repository establishes neither policy, so neither may be presented as an approved assumption.

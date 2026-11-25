@@ -10,3 +10,9 @@ frontend/.angular/
 # OS/editor
 .DS_Store
 *.log
+
+# Docker
+docker-compose.yml
+
+# Node
+node_modules/

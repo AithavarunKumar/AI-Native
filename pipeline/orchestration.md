@@ -23,7 +23,7 @@ That one line is the only input. Everything else below is how it gets turned int
 ### 2 — Developer (turns the spec into code)
 
 - **Role definition:** `.claude/agents/developer-agent.md`
-- **Skills it loads:** `.claude/skills/build-code-skill/SKILL.md` (stack conventions) and, if the change touches the data model, `.claude/skills/migration-safety-skill/SKILL.md`.
+- **Skills it loads:** `.claude/skills/build-code-skill/SKILL.md` (stack conventions); `.claude/skills/migration-safety-skill/SKILL.md` if the change touches the data model; `.claude/skills/memory-management-skill/SKILL.md` to decide what context to load, what to retain in `pipeline/decisions/`, and what to discard.
 - **Rules it must follow:** everything under `pipeline/rules/*.md` that exists at the time (there are none yet — the first one gets written the first time a shipped bug needs a standing rule against recurring).
 - **What it does:** implements the spec from step 1, in the backend and/or frontend as the spec requires, without expanding scope beyond what the spec says.
 - **Output:** working code, committed.

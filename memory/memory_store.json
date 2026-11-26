@@ -1,0 +1,80 @@
+[
+  {
+    "namespace": "repo:serviceforge",
+    "type_tag": "semantic",
+    "content": "TRAVEL_BUFFER_MINUTES = 45: Every booked job reserves its own start/end time plus an additional 45-minute travel buffer for the technician. Source: pipeline/decisions/feature-1-decisions.md, TechnicianAvailabilityService.java. Any downstream feature that reasons about how many jobs fit in a technician's day must use this constant, not a guess.",
+    "source_task": "feature-1-technician-availability",
+    "status": "active"
+  },
+  {
+    "namespace": "repo:serviceforge",
+    "type_tag": "semantic",
+    "content": "LIVE BUG — Feature 1 overlap detection: bookJob() rejects a new booking only if its start time exactly matches an existing booking's start time. It does not check whether the two time ranges genuinely overlap. Two jobs with different-but-overlapping start times for the same technician are both silently accepted. Any consumer that assumes 'a technician's booked slots never overlap' is relying on a guarantee the current code does not provide. Source: pipeline/decisions/feature-1-decisions.md.",
+    "source_task": "feature-1-technician-availability",
+    "status": "active"
+  },
+  {
+    "namespace": "repo:serviceforge",
+    "type_tag": "semantic",
+    "content": "Net available stock formula (feature-2): net_available = physical_quantity − SUM(active_reservation_quantities). This is the authoritative formula for all inventory calculations in Feature 2. Source: requirements.md AC-1.",
+    "source_task": "feature-2-parts-reservation",
+    "status": "active"
+  },
+  {
+    "namespace": "repo:serviceforge",
+    "type_tag": "open_question",
+    "content": "OPEN BUSINESS QUESTION — partial-stock policy (feature-2): The repository does not define whether a shortage allows partial reservations or whether the whole reservation must fail. No default policy is assumed. This absence blocks task T-02. Source: requirements.md AC-3, design-review.md.",
+    "source_task": "feature-2-parts-reservation",
+    "status": "open"
+  },
+  {
+    "namespace": "serviceforge:day2-kata2-requirements:dev",
+    "type_tag": "episodic_decision",
+    "content": "BA agent invented all-or-nothing partial-stock policy without repository evidence; corrected by human intervention (3 interventions on this point alone). Pattern: BA agents on policy-sensitive features tend to invent policy. Mitigation: require BA agents to cite repository evidence before asserting any business policy. Source: memory-architecture.md §1.2 episodic events.",
+    "source_task": "feature-2-requirements-pass",
+    "status": "active"
+  },
+  {
+    "namespace": "serviceforge:day3-architecture-planning:dev",
+    "type_tag": "episodic_decision",
+    "content": "STANDING RULE (feature-2): ReservationCritic exceptions must return structured 422 responses, not 500s. The original design returned HTTP 500 on critic exceptions; design-review finding 2 required structured error handling. Source: design-review.md, memory-architecture.md §1.2.",
+    "source_task": "feature-2-architecture-review",
+    "status": "active"
+  },
+  {
+    "namespace": "serviceforge:day3-architecture-planning:dev",
+    "type_tag": "episodic_decision",
+    "content": "Design review verdict: Needs Changes. Partial-stock policy is the open gate blocking task T-02. No build agent may implement T-02 until the partial-stock business question is resolved and recorded. Source: design-review.md, memory-architecture.md §1.2.",
+    "source_task": "feature-2-architecture-review",
+    "status": "active"
+  },
+  {
+    "namespace": "serviceforge:day2-kata2-requirements:dev",
+    "type_tag": "git_operation",
+    "content": "Soft-reset of the original memory-architecture.md commit during Day 2 kata session.",
+    "source_task": "feature-2-requirements-pass",
+    "status": "active"
+  },
+  {
+    "namespace": "serviceforge:day3-architecture-planning:dev",
+    "type_tag": "git_operation",
+    "content": "Four planning deliverables committed as 'Day3 architecture planning- #4'. Git history is authoritative; not a design fact.",
+    "source_task": "feature-2-architecture-planning",
+    "status": "active"
+  },
+  {
+    "namespace": "session:test",
+    "type_tag": "raw_output",
+    "content": "Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.234 s",
+    "source_task": "feature-2-tests",
+    "status": "active"
+  },
+  {
+    "namespace": "session:test",
+    "type_tag": "semantic",
+    "content": "Assumed all-or-nothing stock policy before design review — policy was invented without repository evidence.",
+    "source_task": "feature-2-requirements-pass",
+    "status": "active",
+    "assumption_status": "unconfirmed"
+  }
+]

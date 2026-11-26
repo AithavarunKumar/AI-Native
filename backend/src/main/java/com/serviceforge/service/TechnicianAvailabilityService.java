@@ -49,11 +49,10 @@ public class TechnicianAvailabilityService {
     /**
      * Books a new job for a technician.
      *
-     * KNOWN ISSUE (see pipeline/features/feature-1-technician-availability.md — "Known issue"):
-     * this method is supposed to reject a booking that overlaps an existing one for the same
-     * technician, but the check below only compares exact start times. Two jobs with different
-     * but overlapping start times are currently accepted silently instead of being rejected with
-     * a conflict error. Fixing this should not remove or ignore the travel-buffer decision above.
+     * Rejects any booking whose time slot — including the 45-minute travel buffer on each end —
+     * overlaps with an existing booking for the same technician. Two intervals [a, b] and [c, d]
+     * overlap when a < d && c < b; the effective end of each job is end + TRAVEL_BUFFER_MINUTES,
+     * so the full check is: newStart < existingEffectiveEnd && existingStart < newEffectiveEnd.
      */
     public Job bookJob(Long technicianId, String customerName, LocalDateTime startTime, LocalDateTime endTime) {
         Technician technician = dataStore.findTechnician(technicianId)
@@ -61,15 +60,16 @@ public class TechnicianAvailabilityService {
 
         List<Job> existingJobs = dataStore.getJobsForTechnician(technicianId);
 
+        LocalDateTime newEffectiveEnd = endTime.plusMinutes(TRAVEL_BUFFER_MINUTES);
         boolean hasConflict = existingJobs.stream()
-                .anyMatch(existing -> existing.getStartTime().equals(startTime));
-        // ^ Bug: this only catches an exact start-time match. It does not detect a genuine
-        //   interval overlap (e.g. an existing 9:00-11:00 job and a new 10:00-12:00 job for the
-        //   same technician), so overlapping bookings are silently accepted.
+                .anyMatch(existing -> {
+                    LocalDateTime existingEffectiveEnd = existing.getEndTime().plusMinutes(TRAVEL_BUFFER_MINUTES);
+                    return startTime.isBefore(existingEffectiveEnd) && existing.getStartTime().isBefore(newEffectiveEnd);
+                });
 
         if (hasConflict) {
             throw new IllegalStateException(
-                    "Technician " + technician.getName() + " already has a job at " + startTime);
+                    "Technician " + technician.getName() + " already has a conflicting booking during the requested slot (including travel buffer)");
         }
 
         Job job = new Job(dataStore.nextJobId(), technicianId, customerName, startTime, endTime, JobStatus.SCHEDULED);

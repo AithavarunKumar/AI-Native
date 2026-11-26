@@ -25,4 +25,4 @@ The overlap-detection bug (exact start-time match only) was fixed by the bug-fix
 - `backend/.../controller/TechnicianController.java`, `JobController.java`
 - `backend/.../model/Technician.java`, `Job.java`, `JobStatus.java`
 - `backend/.../data/MockDataStore.java`
-- No `pipeline/rules/*.md` yet — none has been needed until now
+- `pipeline/rules/no-overlap-booking.md` — standing rule against exact-start-time checks

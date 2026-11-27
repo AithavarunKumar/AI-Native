@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c \"cat | grep -qE '(AKIA[0-9A-Z]{16}|sk-live-[a-zA-Z0-9]{24,}|ghp_[a-zA-Z0-9]{36}|-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY---)' && { echo 'BLOCKED: Hardcoded secret or private key detected in proposed file content. Remove all credentials before writing.' >&2; exit 2; } || exit 0\""
+          }
+        ]
+      }
+    ]
+  }
+}

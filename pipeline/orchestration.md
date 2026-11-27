@@ -23,7 +23,7 @@ That one line is the only input. Everything else below is how it gets turned int
 ### 2 — Developer (turns the spec into code)
 
 - **Role definition:** `.claude/agents/developer-agent.md`
-- **Skills it loads:** `.claude/skills/build-code-skill/SKILL.md` (stack conventions) and, if the change touches the data model, `.claude/skills/migration-safety-skill/SKILL.md`.
+- **Skills it loads:** `.claude/skills/build-code-skill/SKILL.md` (stack conventions); `.claude/skills/migration-safety-skill/SKILL.md` if the change touches the data model; `.claude/skills/memory-management-skill/SKILL.md` to decide what context to load, what to retain in `pipeline/decisions/`, and what to discard.
 - **Rules it must follow:** everything under `pipeline/rules/*.md` that exists at the time (there are none yet — the first one gets written the first time a shipped bug needs a standing rule against recurring).
 - **What it does:** implements the spec from step 1, in the backend and/or frontend as the spec requires, without expanding scope beyond what the spec says.
 - **Output:** working code, committed.
@@ -33,6 +33,19 @@ That one line is the only input. Everything else below is how it gets turned int
 - **Role definition:** `.claude/agents/tester-agent.md`
 - **What it does:** writes and runs tests against the Definition of Done in the spec from step 1 — not against what the code happens to do, but against what it was supposed to do.
 - **Output:** test results. If they fail, the loop returns to step 2, not step 1 — the spec doesn't change because the code didn't meet it.
+
+### 4 — Review Agent (gates the PR)
+
+- **Role definition:** `.claude/agents/review-agent.md`
+- **Checklist it loads:** `.claude/rules/review-checklist-rule.md` — read by exact path.
+- **What it does:** independently reads the review checklist and the linked Jira story (or `pipeline/features/feature-N-<slug>/requirements.md` as proxy if Jira MCP is unavailable), then inspects every implemented file against the five checklist areas: Jira AC verification, code quality, security (OWASP web + LLM), compliance, and design alignment.
+- **Output:** `docs/reviews/[story-id]-review.md`. A **Ship** verdict from this step is required before any PR is opened.
+
+If the review returns **No-Ship**, the pipeline returns to step 2 (Developer) with the specific failing checklist items. The spec does not change.
+
+### 5 — PR stage
+
+Raise the pull request only after a **Ship** verdict from step 4. The PR description must reference the review report at `docs/reviews/[story-id]-review.md`.
 
 ## Safe recovery
 

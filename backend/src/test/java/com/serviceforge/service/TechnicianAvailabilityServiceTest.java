@@ -11,12 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Note for anyone extending this suite: this class covers the happy path and the one conflict
- * case Feature 1 actually catches (an exact start-time match). It does NOT test a genuine
- * interval overlap with a different start time — see
- * pipeline/features/feature-1-technician-availability.md, "Known issue," and
- * TechnicianAvailabilityService.bookJob(...) for why. Adding that test is part of the exercise,
- * not an oversight to quietly fix here.
+ * Covers the happy path, exact start-time conflicts (regression guard), genuine interval
+ * overlaps with different start times, and the 45-minute travel-buffer boundary.
  */
 class TechnicianAvailabilityServiceTest {
 
@@ -56,5 +52,36 @@ class TechnicianAvailabilityServiceTest {
         LocalDateTime end = start.plusHours(1);
 
         assertThrows(IllegalArgumentException.class, () -> service.bookJob(999L, "Nobody", start, end));
+    }
+
+    @Test
+    void rejectsABookingThatOverlapsAnExistingJobFromBelow() {
+        // Technician 1 has a seeded job 09:00–11:00. A new job at 10:00–12:00 overlaps it.
+        LocalDateTime start = LocalDateTime.now().withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(2);
+
+        assertThrows(IllegalStateException.class, () -> service.bookJob(1L, "Overlapping Customer", start, end));
+    }
+
+    @Test
+    void rejectsABookingThatConflictsOnlyViaTheTravelBuffer() {
+        // Technician 1 has 09:00–11:00. The travel buffer adds 45 min → effective end 11:45.
+        // A new job at 11:30 starts inside the buffer window and must be rejected.
+        LocalDateTime start = LocalDateTime.now().withHour(11).withMinute(30).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(1);
+
+        assertThrows(IllegalStateException.class, () -> service.bookJob(1L, "Buffer-Clash Customer", start, end));
+    }
+
+    @Test
+    void acceptsABookingStartingExactlyAtEffectiveEndOfPreviousJob() {
+        // Technician 1 has 09:00–11:00 + 45 min buffer = effective end 11:45.
+        // A new job starting exactly at 11:45 must be accepted (boundary is exclusive).
+        LocalDateTime start = LocalDateTime.now().withHour(11).withMinute(45).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusHours(1);
+
+        Job job = service.bookJob(1L, "Post-Buffer Customer", start, end);
+
+        assertEquals("Post-Buffer Customer", job.getCustomerName());
     }
 }

@@ -1,0 +1,9 @@
+{
+  "name": "serviceforge-memory",
+  "version": "1.0.0",
+  "description": "Memory write pipeline for ServiceForge — Part 1: Write Path & Store Integration",
+  "main": "write_path.js",
+  "dependencies": {
+    "pg": "^8.11.0"
+  }
+}

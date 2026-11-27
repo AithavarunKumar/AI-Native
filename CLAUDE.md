@@ -28,6 +28,14 @@ Skills live under `.claude/skills/<skill-name>/SKILL.md` (standard Claude Agent 
 - `spec-generation-skill` — how the BA agent turns intent into a feature spec.
 - `migration-safety-skill` — how to evolve the mock data model without breaking existing consumers (there is no real database, but the same discipline applies to the in-memory model).
 
+## Review layer
+
+Before any PR is raised, `review-agent` must run against the completed implementation. The checklist it uses is `.claude/rules/review-checklist-rule.md`, covering five areas: Jira AC verification, code quality, security (OWASP web + LLM), compliance, and design alignment.
+
+The review report is saved to `docs/reviews/[story-id]-review.md`. A **Ship** verdict is required before the PR step. The review-agent is wired after `tester-agent` in `pipeline/orchestration.md`.
+
+A `PreToolUse` hook in `.claude/settings.json` blocks any `Write` or `Edit` that contains hardcoded credentials (AWS keys, Stripe live keys, GitHub PATs, private keys) before the file is written.
+
 ## Memory note for this repo
 
 Feature-by-feature decisions (the facts a later feature may need to retrieve) are logged under `pipeline/decisions/`, one file per feature — starting with `pipeline/decisions/feature-1-decisions.md`. Do not rely on conversation history alone to carry these facts forward; they are committed here specifically so they can be retrieved on demand instead of kept in context permanently.

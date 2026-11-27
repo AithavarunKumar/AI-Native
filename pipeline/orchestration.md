@@ -34,6 +34,19 @@ That one line is the only input. Everything else below is how it gets turned int
 - **What it does:** writes and runs tests against the Definition of Done in the spec from step 1 — not against what the code happens to do, but against what it was supposed to do.
 - **Output:** test results. If they fail, the loop returns to step 2, not step 1 — the spec doesn't change because the code didn't meet it.
 
+### 4 — Review Agent (gates the PR)
+
+- **Role definition:** `.claude/agents/review-agent.md`
+- **Checklist it loads:** `.claude/rules/review-checklist-rule.md` — read by exact path.
+- **What it does:** independently reads the review checklist and the linked Jira story (or `pipeline/features/feature-N-<slug>/requirements.md` as proxy if Jira MCP is unavailable), then inspects every implemented file against the five checklist areas: Jira AC verification, code quality, security (OWASP web + LLM), compliance, and design alignment.
+- **Output:** `docs/reviews/[story-id]-review.md`. A **Ship** verdict from this step is required before any PR is opened.
+
+If the review returns **No-Ship**, the pipeline returns to step 2 (Developer) with the specific failing checklist items. The spec does not change.
+
+### 5 — PR stage
+
+Raise the pull request only after a **Ship** verdict from step 4. The PR description must reference the review report at `docs/reviews/[story-id]-review.md`.
+
 ## Safe recovery
 
 If any step produces something that doesn't match its input (a spec with no Definition of Done, code that doesn't match the spec, tests that can't run), stop and surface that to a human rather than proceeding on a guess. This pipeline has no silent fallback.

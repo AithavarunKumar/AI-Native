@@ -30,4 +30,8 @@ Test code, committed, plus a short pass/fail report against each Definition-of-D
 
 - Does every Definition-of-Done item have a corresponding test — no gaps, no extra tests for things the spec never asked for?
 - If something fails, does the report point at the spec item, not just "test 3 failed"?
-- Would this test suite have caught Feature 1's known overlap-detection issue, if it existed at the time? (It didn't — that's exactly why this role now exists on every feature going forward.)
+- Did you run the tests and capture real output — no claiming PASS without execution?
+
+## How to find the test plan
+
+Read `pipeline/features/feature-N-<slug>/test-plan.md` for the AC-to-test mapping, run command, and known gaps for the feature under test.

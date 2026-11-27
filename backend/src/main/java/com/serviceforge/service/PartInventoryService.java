@@ -2,6 +2,7 @@ package com.serviceforge.service;
 
 import com.serviceforge.data.MockDataStore;
 import com.serviceforge.dto.PartStockResponse;
+import com.serviceforge.model.JobStatus;
 import com.serviceforge.model.Reservation;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ public class PartInventoryService {
     public List<PartStockResponse> getAllPartsWithStock() {
         return dataStore.getAllParts().stream()
                 .map(p -> {
-                    int reserved = dataStore.getReservationsForSku(p.getSku())
+                    int reserved = dataStore.getActiveReservationsForSku(p.getSku())
                             .stream().mapToInt(Reservation::getQuantity).sum();
                     return new PartStockResponse(p.getSku(), p.getName(), p.getQuantityOnHand(), reserved);
                 })
@@ -31,7 +32,7 @@ public class PartInventoryService {
 
     public Optional<PartStockResponse> getPartWithStock(String sku) {
         return dataStore.findPart(sku).map(p -> {
-            int reserved = dataStore.getReservationsForSku(sku)
+            int reserved = dataStore.getActiveReservationsForSku(sku)
                     .stream().mapToInt(Reservation::getQuantity).sum();
             return new PartStockResponse(p.getSku(), p.getName(), p.getQuantityOnHand(), reserved);
         });
@@ -41,12 +42,32 @@ public class PartInventoryService {
         var part = dataStore.findPart(sku)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown sku '" + sku + "'"));
 
-        dataStore.findJob(jobId)
+        var job = dataStore.findJob(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown job id " + jobId));
 
-        int reserved = dataStore.getReservationsForSku(sku)
+        // AC-8: only SCHEDULED jobs may hold reservations
+        if (job.getStatus() != JobStatus.SCHEDULED) {
+            throw new IllegalStateException("Job " + jobId + " is not in SCHEDULED status");
+        }
+
+        // AC-6/AC-7: idempotency — check for existing active reservation for this job+sku
+        List<Reservation> existing = dataStore.getReservationsForJob(jobId).stream()
+                .filter(r -> r.getSku().equals(sku) && r.getStatus() == Reservation.ReservationStatus.ACTIVE)
+                .collect(Collectors.toList());
+
+        if (!existing.isEmpty()) {
+            Reservation prior = existing.get(0);
+            if (prior.getQuantity() == quantity) {
+                return prior; // AC-6: identical retry returns existing record
+            }
+            throw new IllegalStateException(
+                    "Conflicting retry: reservation already exists for job " + jobId + " with different requirements");
+        }
+
+        // AC-1: net available = physicalQty − active reservations
+        int activeReserved = dataStore.getActiveReservationsForSku(sku)
                 .stream().mapToInt(Reservation::getQuantity).sum();
-        int available = part.getQuantityOnHand() - reserved;
+        int available = part.getQuantityOnHand() - activeReserved;
 
         if (available < quantity) {
             throw new IllegalStateException(
@@ -56,6 +77,15 @@ public class PartInventoryService {
         Reservation res = new Reservation(UUID.randomUUID().toString(), sku, jobId, quantity);
         dataStore.saveReservation(res);
         return res;
+    }
+
+    // AC-10: releases all ACTIVE reservations for a job; returns count released
+    public synchronized int release(Long jobId) {
+        List<Reservation> active = dataStore.getReservationsForJob(jobId).stream()
+                .filter(r -> r.getStatus() == Reservation.ReservationStatus.ACTIVE)
+                .collect(Collectors.toList());
+        active.forEach(r -> r.setStatus(Reservation.ReservationStatus.RELEASED));
+        return active.size();
     }
 
     public List<Reservation> getReservationsForJob(Long jobId) {

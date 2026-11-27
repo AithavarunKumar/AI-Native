@@ -114,4 +114,10 @@ public class MockDataStore {
                 .filter(r -> r.getJobId().equals(jobId))
                 .collect(Collectors.toList());
     }
+
+    public List<Reservation> getActiveReservationsForSku(String sku) {
+        return reservations.stream()
+                .filter(r -> r.getSku().equals(sku) && r.getStatus() == Reservation.ReservationStatus.ACTIVE)
+                .collect(Collectors.toList());
+    }
 }

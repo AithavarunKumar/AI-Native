@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/parts")
@@ -41,7 +42,13 @@ public class PartController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(new ApiError(e.getMessage()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(409).body(new ApiError(e.getMessage()));
+            return ResponseEntity.status(422).body(new ApiError(e.getMessage()));
         }
+    }
+
+    @DeleteMapping("/reservations/{jobId}")
+    public ResponseEntity<?> releaseReservations(@PathVariable Long jobId) {
+        int count = partInventoryService.release(jobId);
+        return ResponseEntity.ok(Map.of("released", count));
     }
 }
